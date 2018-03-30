@@ -8,9 +8,9 @@ using Autodesk.AutoCAD.Geometry;
 using Autodesk.AutoCAD.EditorInput;
 
 // This line is not mandatory, but improves loading performances
-[assembly: ExtensionApplication(typeof(ALC_Stair.C3D.MyPlugin))]
+[assembly: ExtensionApplication(typeof(ALC_Stair.MyPlugin))]
 
-namespace ALC_Stair.C3D
+namespace ALC_Stair
 {
 
     // This class is instantiated by AutoCAD once and kept alive for the 

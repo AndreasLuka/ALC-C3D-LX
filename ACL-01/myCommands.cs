@@ -9,9 +9,9 @@ using Autodesk.Civil.DatabaseServices;
 
 
 // This line is not mandatory, but improves loading performances
-[assembly: CommandClass(typeof(ACL_01.Civil3D.MyCommands))]
+[assembly: CommandClass(typeof(ALCJIG2.Civil3D.MyCommands))]
 
-namespace ACL_01.Civil3D
+namespace ALCJIG2.Civil3D
 {
     public class MyCommands
     {
@@ -71,5 +71,6 @@ namespace ACL_01.Civil3D
                 catch { }
             }
         }
+
     }
 }

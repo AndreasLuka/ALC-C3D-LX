@@ -9,42 +9,20 @@ using Autodesk.AutoCAD.DatabaseServices;
 
 
 // This line is not mandatory, but improves loading performances
-[assembly: CommandClass(typeof(ALC_Stair.C3D.MyCommands))]
+[assembly: CommandClass(typeof(ALC_Stair.MyCommands ))]
 
-namespace ALC_Stair.C3D
+namespace ALC_Stair
 {
 
     public class MyCommands
     {
 
-        [CommandMethod("ALCGroup", "ALCCreateStair", "ALCCreateStairLocal", CommandFlags.Modal)]
-        public void ALCStairCreate()
+       [CommandMethod("ALCStairCreate")]
+       public void InsertRotateStair()
         {
-            // Get the current document and database, and start a transaction
             Document doc = Application.DocumentManager.MdiActiveDocument;
             Database db = doc.Database;
-            Editor ed = doc.Editor;
-
-            int    steps = 5;
-            Double tread = 0.31;
-            Double riser = 0.16;
-            Double landing = 1.10;
-            Double width = 2.0;
-            Point3d ptEnd = new Point3d(0, 0, 0);
-            Point3d ptStart = new Point3d(0,0,0);
-
-            PromptPointResult pPointRes;
-
-            PromptPointOptions pPointOpts = new PromptPointOptions("");
-            pPointOpts.Message = "\nSpecify start point or ";
-
-            // Define the valid keywords and allow Enter
-            pPointOpts.Keywords.Add("Tread");
-            pPointOpts.Keywords.Add("Riser");
-            pPointOpts.Keywords.Add("Landing");
-            pPointOpts.Keywords.Add("Width");
-            pPointOpts.Keywords.Add("Steps");
-            pPointOpts.AllowNone = true;
+            Editor   ed = doc.Editor;
 
             // prompt for Steps
             PromptIntegerResult pIntRes;
@@ -56,133 +34,113 @@ namespace ALC_Stair.C3D
             //prompt for Tread, Riser, Landing, Width 
             PromptDoubleResult pDoubleRes;
             PromptDoubleOptions pDoubleOpts = new PromptDoubleOptions("");
+            pDoubleOpts.AllowNegative = false;
 
-            int iPoint = 0; //no Startpoint , no Endpoint 
-
-            do
-            {
-                // Get the value entered by the user
-                pPointRes = doc.Editor.GetPoint(pPointOpts);
-
-                // Exit if the user presses ESC or cancels the command
-                if (pPointRes.Status == PromptStatus.Cancel) return;
-
-                if (pPointRes.Status == PromptStatus.Keyword)
-                {
-                    // Handling keywords
-                    switch (pPointRes.StringResult)
-                    {
-                        case "Tread":
-                            pDoubleOpts.Message = "\nSpecify tread lenght [" + tread.ToString() + "]: ";
-                            pDoubleRes = doc.Editor.GetDouble(pDoubleOpts);
-                            tread = pDoubleRes.Value;
-                            break;
-                        case "Riser":
-                            pDoubleOpts.Message = "\nSpecify riser height [" + riser.ToString() + "]: ";
-                            pDoubleRes = doc.Editor.GetDouble(pDoubleOpts);
-                            riser = pDoubleRes.Value;
-                            break;
-                        case "Landing":
-                            pDoubleOpts.Message = "\nSpecify landing lenght [" + landing.ToString() + "]: ";
-                            pDoubleRes = doc.Editor.GetDouble(pDoubleOpts);
-                            landing = pDoubleRes.Value;
-                            break;
-                        case "Width":
-                            pDoubleOpts.Message = "\nSpecify width [" + width.ToString() + "]: ";
-                            pDoubleRes = doc.Editor.GetDouble(pDoubleOpts);
-                            width = pDoubleRes.Value;
-                            break;
-                        case "Steps":
-                            pIntOpts.Message = "\nSpecify number of steps [" + steps.ToString() + "]: ";
-                            pIntRes = doc.Editor.GetInteger(pIntOpts);
-                            steps = pIntRes.Value;
-                            break;
-                    }
-
-                }
-                else
-                {
-                    // Handling Points
-                    switch (iPoint)
-                    {
-                        case 0:
-                            // Prompt is for StartPoint
-
-                            ptStart = pPointRes.Value;
-                            iPoint++;
-
-                            pPointOpts.Message = "\nSpecify end point: ";
-                            pPointOpts.UseBasePoint = true;
-                            pPointOpts.BasePoint = ptStart;
-
-                            break;
-                        case 1:
-                            // Prompt is for EndPoint
-                            ptEnd = pPointRes.Value;
-                            iPoint++;
-                            break;
-                    }
-
-                }
-            }
-            while (iPoint < 2);
-            
             try
             {
                 using (Transaction tr = db.TransactionManager.StartTransaction())
                 {
-                    // Open the Block table record for read
-                    BlockTable blkTable;
-                    blkTable = tr.GetObject(db.BlockTableId, OpenMode.ForRead) as BlockTable;
 
-                    // Open the Block table record Model space for write
-                    BlockTableRecord blkTblRec;
-                    blkTblRec = tr.GetObject(blkTable[BlockTableRecord.ModelSpace], OpenMode.ForWrite) as BlockTableRecord;
+                    // Create basic stair
+                    BlockTable bt = (BlockTable)tr.GetObject(db.BlockTableId, OpenMode.ForRead);
+                    // Solid3d stair3d = myFunctions.CreateStair3D(5, 0.16, 0.32, 1.1, 2.0);
 
-                    Solid3d stair3d = myFunctions.CreateStair3D(steps, riser, tread, landing, width);
-                    if (stair3d != null)
+                    // Create the Jig and ask the user to place the Stair
+                    StairJig jig = new StairJig(5, 0.16, 0.32, 1.1, 2.0);
+                    PromptResult pr;
+
+                    do
                     {
+                        // Get the value entered by the user
+                        pr = ed.Drag(jig);
 
-                        CoordinateSystem3d curUCS = doc.Editor.CurrentUserCoordinateSystem.CoordinateSystem3d;
-                        Matrix3d matUCS =ed.CurrentUserCoordinateSystem;
-                        Point3d pOrign = new Point3d(0, 0, 0);
-                        Vector3d vStart = pOrign.GetVectorTo(ptStart);
+                        // Exit if the user presses ESC or cancels the command
+                        if (pr.Status == PromptStatus.Cancel) return;
+                        if (pr.Status == PromptStatus.Keyword)
+                        {
+                            // Handling keywords
+                            switch (pr.StringResult)
+                            {
+                                case "Steps":
+                                    pIntOpts.Message = "\nSpecify number of steps [" + jig.steps.ToString() + "]: ";
+                                    pIntRes = doc.Editor.GetInteger(pIntOpts);
+                                    jig.steps = pIntRes.Value;
+                                    break;
+                                case "Riser":
+                                    pDoubleOpts.Message = "\nSpecify riser height [" + jig.riser.ToString() + "]: ";
+                                    pDoubleOpts.AllowZero = false;
+                                    pDoubleRes = doc.Editor.GetDouble(pDoubleOpts);
+                                    jig.riser = pDoubleRes.Value;
+                                    break;
+                                case "Tread":
+                                    pDoubleOpts.Message = "\nSpecify tread lenght [" + jig.tread.ToString() + "]: ";
+                                    pDoubleOpts.AllowZero = false;
+                                    pDoubleRes = doc.Editor.GetDouble(pDoubleOpts);
+                                    jig.tread = pDoubleRes.Value;
+                                    break;
+                                case "Landing":
+                                    pDoubleOpts.Message = "\nSpecify landing lenght [" + jig.landing.ToString() + "]: ";
+                                    pDoubleRes = doc.Editor.GetDouble(pDoubleOpts);
+                                    jig.landing = pDoubleRes.Value;
+                                    break;
+                                case "Width":
+                                    pDoubleOpts.Message = "\nSpecify width [" + jig.width.ToString() + "]: ";
+                                    pDoubleOpts.AllowZero = false;
+                                    pDoubleRes = doc.Editor.GetDouble(pDoubleOpts);
+                                    jig.width = pDoubleRes.Value;
+                                    break;
+                        }
+                            jig.jigUpdate = true;
+                        }
+                        else if (pr.Status == PromptStatus.OK)
+                        {
+                            // Go to next phase
+                            jig.jigStatus++;
+                        }
+                    }
+                    while (jig.jigStatus < 2);
 
-                        Point2d start = new Point2d(ptStart.X, ptStart.Y);
-                        Point2d end = new Point2d(ptEnd.X, ptEnd.Y);
- 
-                        stair3d.TransformBy(Matrix3d.Displacement(vStart));
-                        stair3d.TransformBy(Matrix3d.Rotation(start.GetVectorTo(end).Angle, curUCS.Zaxis, ptStart));
-                        stair3d.TransformBy(matUCS);
 
-                        blkTblRec.AppendEntity(stair3d);
-                        tr.AddNewlyCreatedDBObject(stair3d, true);
+                    if (pr.Status == PromptStatus.OK)
+                    {
+                        Solid3d stair3d = myFunctions.CreateStair3D(jig.steps, jig.riser, jig.tread, jig.landing, jig.width);
+                        if (stair3d != null)
+                        {
+                            // Moving and adding to staircase drawing database
+                            stair3d.TransformBy(jig.Displacement);
+                            stair3d.TransformBy(jig.Rotation);
+                            BlockTableRecord curSpace = (BlockTableRecord)tr.GetObject(db.CurrentSpaceId, OpenMode.ForWrite);
+                            curSpace.AppendEntity(stair3d);
+                            tr.AddNewlyCreatedDBObject(stair3d, true);
 
-                        // Extension dictionary
-                        DBObject dbObj = stair3d;
-                        ObjectId extId = dbObj.ExtensionDictionary;
 
-                        dbObj.UpgradeOpen();
-                        dbObj.CreateExtensionDictionary();
-                        extId = dbObj.ExtensionDictionary;
+                            // Extension dictionary
+                            DBObject dbObj = stair3d;
+                            ObjectId extId = dbObj.ExtensionDictionary;
 
-                        DBDictionary dbExt = (DBDictionary)tr.GetObject(extId, OpenMode.ForRead);
+                            dbObj.UpgradeOpen();
+                            dbObj.CreateExtensionDictionary();
+                            extId = dbObj.ExtensionDictionary;
 
-                        dbExt.UpgradeOpen();
+                            DBDictionary dbExt = (DBDictionary)tr.GetObject(extId, OpenMode.ForRead);
 
-                        Xrecord xr = new Xrecord();
-                        ResultBuffer rb = new ResultBuffer();
-                        rb.Add(new TypedValue((int)DxfCode.ExtendedDataInteger32, steps));
-                        rb.Add(new TypedValue((int)DxfCode.ExtendedDataReal, tread));
-                        rb.Add(new TypedValue((int)DxfCode.ExtendedDataReal, riser));
-                        rb.Add(new TypedValue((int)DxfCode.ExtendedDataReal, landing));
-                        rb.Add(new TypedValue((int)DxfCode.ExtendedDataReal, width));
+                            dbExt.UpgradeOpen();
 
-                        xr.Data = rb;
-                        dbExt.SetAt("StairCase", xr);
-                        tr.AddNewlyCreatedDBObject(xr, true);
+                            Xrecord xr = new Xrecord();
+                            ResultBuffer rb = new ResultBuffer();
+                            rb.Add(new TypedValue((int)DxfCode.ExtendedDataInteger32, jig.steps));
+                            rb.Add(new TypedValue((int)DxfCode.ExtendedDataReal, jig.tread));
+                            rb.Add(new TypedValue((int)DxfCode.ExtendedDataReal, jig.riser));
+                            rb.Add(new TypedValue((int)DxfCode.ExtendedDataReal, jig.landing));
+                            rb.Add(new TypedValue((int)DxfCode.ExtendedDataReal, jig.width));
 
+                            xr.Data = rb;
+                            dbExt.SetAt("StairCase", xr);
+                            tr.AddNewlyCreatedDBObject(xr, true);
+
+                        }
                         tr.Commit();
+
                     }
                     else
                     {
@@ -195,28 +153,10 @@ namespace ALC_Stair.C3D
             {
                 ed.WriteMessage(ex.ToString());
             }
-
         }
 
-         /*
-                [CommandMethod("ALCStairJig")]
-                public static void StairJig()
-                {
-                    Database db = HostApplicationServices.WorkingDatabase;
 
-                    Solid3d stair = myFunctions.CreateStair3D (5, 0.15, 0.30, 1.1, 2.1);
-
-                    using (Transaction tr = db.TransactionManager.StartTransaction())
-                    {
-                        if (StairInsertRotating.Jig(stair))
-                            tr.Commit();
-                        else
-                            tr.Abort();
-                     }
-                }
-
-         */
-        [CommandMethod("ALCGroup", "ALCGetStair", "ALCGetStairLocal", CommandFlags.Modal | CommandFlags.UsePickSet)]
+        [CommandMethod("ALCGroup", "ALCGetStair", "ALCGetStairLocal", CommandFlags.UsePickSet)]
         public void GetStairValues()
         {
             Document doc = Application.DocumentManager.MdiActiveDocument;

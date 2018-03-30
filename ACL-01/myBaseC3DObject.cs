@@ -1,7 +1,7 @@
 ﻿using System;
 using Autodesk.AutoCAD.DatabaseServices;
 
-namespace ACL_01.Civil3D
+namespace ALCJIG2.Civil3D
 {
     public class BaseC3DObject
     {

@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Windows;
 
 
-namespace ACL_01.Civil3D
+namespace ALCJIG2.Civil3D
 {
     /// <summary>
     /// Interaction logic for myWindow.xaml

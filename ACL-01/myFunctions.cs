@@ -8,7 +8,7 @@ using Autodesk.Civil.DatabaseServices.Styles;
 using Autodesk.AutoCAD.Runtime;
 
 
-namespace ACL_01.Civil3D
+namespace ALCJIG2.Civil3D
 {
     class myFunctions
     {

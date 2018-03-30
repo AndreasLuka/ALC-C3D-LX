@@ -1,10 +1,9 @@
 ﻿using System;
 using Autodesk.AutoCAD.ApplicationServices;
 using Autodesk.AutoCAD.DatabaseServices;
-using Autodesk.AutoCAD.EditorInput;
 using Autodesk.AutoCAD.Geometry;
 
-namespace ALC_Stair.C3D
+namespace ALC_Stair
 {
     class myFunctions
     {
