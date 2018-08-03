@@ -31,6 +31,10 @@ namespace ALC_C3DStair
             bool reverse = false;
             double elevation = 5;
 
+            // get values from PropertSetDefinitation standard values
+
+
+
             ObjectId alignId = MyFunctions.SelectAlignment();
 
             if (alignId == ObjectId.Null) return;
@@ -55,7 +59,7 @@ namespace ALC_C3DStair
                     // create centerline alignment and change offset to 0 presuming style "Stair"exist
                     string name = Alignment.GetNextUniqueName("Stair-<[Next Counter(CP)]>");
 
-                    ObjectId styleId = civdoc.Styles.AlignmentStyles["Stair"];
+                    ObjectId styleId = civdoc.Styles.AlignmentStyles["ALCStair"];
                     if (jig.stationStart > jig.stationEnd)
                     {
                         // swap
@@ -73,36 +77,7 @@ namespace ALC_C3DStair
                     offsetInfo.LockToStartStation = false;
                     offsetInfo.LockToEndStation = false;
 
-                    // Create two new alignment with an offset of width/2 and lock to start/end to parent alignment start/end:
-                    // styleId = civdoc.Styles.AlignmentStyles["Offsets"];
-                    // ObjectId leftLineId = Alignment.CreateOffsetAlignment(String.Format("Stair Offset {0} Left", width / 2), ctLineId, -width / 2, styleId);
-                    // Alignment leftLine = leftLineId.GetObject(OpenMode.ForWrite) as Alignment;
-                    // OffsetAlignmentInfo leftOffsetInfo = leftLine.OffsetAlignmentInfo;
-                    // leftOffsetInfo.LockToStartStation = true;
-                    // leftOffsetInfo.LockToEndStation = true;
-
-                    // ObjectId rightLineId = Alignment.CreateOffsetAlignment(String.Format("Stair Offset {0} Right", width / 2), ctLineId, width / 2, styleId);
-                    // Alignment rightLine = rightLineId.GetObject(OpenMode.ForWrite) as Alignment;
-                    // OffsetAlignmentInfo rightOffsetInfo = rightLine.OffsetAlignmentInfo;
-                    // rightOffsetInfo.LockToStartStation = true;
-                    // rightOffsetInfo.LockToEndStation = true;
-
-                    bool result = MyFunctions.SetPropertiesToAlignment(stairAlignment, tread, riser, landing, width, steps, reverse, elevation);
-
-                    MyFunctions.CreateProfileNoSurface(stairAlignment);
-
-                    // use the same layer as the alignment
-                    // ObjectId layerId = stairAlignment.LayerId;
-                    // get the standard style and label set 
-                    // these calls will fail on templates without a style named "Stair"
-                    // ObjectId profileStyleId = civdoc.Styles.ProfileStyles["Stair"];
-                    // ObjectId labelSetId = civdoc.Styles.LabelSetStyles.ProfileLabelSetStyles["Stair"];
-
-                    // ObjectId oProfileId = Profile.CreateByLayout("StairLine", align.Id, layerId, profileStyleId, labelSetId);
-
-                    // Now add the entities that define the profile.
-
-
+                    bool result = MyFunctions.SetStairPropertiesToAlignment(stairAlignment, tread, riser, 0, width, steps, false, 0);
                     tr.Commit();
                 }
 

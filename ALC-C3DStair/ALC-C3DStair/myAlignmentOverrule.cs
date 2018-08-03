@@ -17,20 +17,6 @@ using System;
 
 namespace ALC_C3DStair
 {
-    public class TransformOverruleAlignment : TransformOverrule
-    {
-        Editor ed = Application.DocumentManager.MdiActiveDocument.Editor;
-
-
-        public override void TransformBy(Autodesk.AutoCAD.DatabaseServices.Entity e, Matrix3d transform)
-        {
-            base.TransformBy(e, transform);
-            ed.WriteMessage("TransformByOverrule called");
-
-        }
-    }
-
-
     public class DrawableOverruleAlignment : DrawableOverrule
     {
 
@@ -41,7 +27,7 @@ namespace ALC_C3DStair
         double tread = 0.32;
         double landing = 0;
         double riser = 0.16;
-        double elevation = 5;
+        double elevation = 0;
         bool reverse = false;
 
         public override bool WorldDraw(Drawable drawable, WorldDraw wd)
@@ -51,19 +37,16 @@ namespace ALC_C3DStair
             double bearing = Double.NaN;
             double angle = Double.NaN;
 
-
-
             // draw the base class
             bool result = base.WorldDraw(drawable, wd);
 
-
             Alignment align = (Alignment)drawable;
 
-            if ((align.Length > tread) && MyFunctions.GetPropertiesFromAlignment(align, ref tread, ref riser, ref landing, ref width, ref steps, ref reverse, ref elevation))
+            if ((align.Length > tread) && MyFunctions.GetStairPropertiesFromAlignment(align, ref tread, ref riser, ref landing, ref width, ref steps, ref reverse, ref elevation))
             {
 
                 int maxSteps = (int)(align.Length / tread);
-                MyFunctions.SetPropertiesToAlignment(align, tread, riser, landing, width, maxSteps, reverse, elevation);
+                MyFunctions.SetStairPropertiesToAlignment(align, tread, riser, landing, width, maxSteps, reverse, elevation);
 
                 if (MyFunctions.IsPlanView())
                 {
@@ -169,22 +152,6 @@ namespace ALC_C3DStair
                         Solid3d solidStep = new Solid3d();
                         solidStep.CreateBox(tread, width, riser);
 
-                        // Autodesk.AutoCAD.DatabaseServices.Polyline poly = new Autodesk.AutoCAD.DatabaseServices.Polyline();
-
-                        // poly.AddVertexAt(0, new Point2d(0, -width), 0, 0, 0);
-                        // poly.AddVertexAt(0, new Point2d(tread, -width), 0, 0, 0);
-                        // poly.AddVertexAt(0, new Point2d(tread, width), 0, 0, 0);
-                        // poly.AddVertexAt(0, new Point2d(0, width), 0, 0, 0);
-                        // poly.Closed = true;
-                        
-                        // DBObjectCollection plineCollection = new DBObjectCollection();
-                        // plineCollection.Add(poly);
-
-                        // DBObjectCollection myRegionColl = Region.CreateFromCurves(plineCollection);
-                        // Region acRegion = myRegionColl[0] as Region;
-
-
-
                         solidStep.TransformBy(displacement);
                         solidStep.TransformBy(rotation);
                         solidStep.WorldDraw(wd);
@@ -204,7 +171,7 @@ namespace ALC_C3DStair
         {
             Alignment align = overruledSubject as Alignment;
             if (align == null) return false;
-            else return (MyFunctions.IsPropertySetOnAlignment(align));
+            else return (MyFunctions.IsStairPropertySetOnAlignment(align));
         }
 
  

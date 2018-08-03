@@ -22,7 +22,6 @@ namespace ALC_C3DStair
 
         private static DrawableOverruleAlignment _overruleAlignment = null;
 
-
         void IExtensionApplication.Initialize()
         {
             // Add one time initialization here
@@ -44,6 +43,8 @@ namespace ALC_C3DStair
 
             // Initialize your plug-in application here
 
+            // Check Style, Label and PropertSetDefinition
+
             if (_overruleAlignment == null)
             {
                 _overruleAlignment = new DrawableOverruleAlignment();
@@ -53,8 +54,8 @@ namespace ALC_C3DStair
                 _overruleAlignment.SetCustomFilter();
                 Overrule.Overruling = true;
             }
-
-         Application.DocumentManager.MdiActiveDocument.Editor.Regen();
+            // Regen is required to update changes on screen
+            Application.DocumentManager.MdiActiveDocument.Editor.Regen();
             //
         }
 

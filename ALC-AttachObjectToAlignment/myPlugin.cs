@@ -6,6 +6,7 @@ using Autodesk.AutoCAD.ApplicationServices;
 using Autodesk.AutoCAD.DatabaseServices;
 using Autodesk.AutoCAD.Geometry;
 using Autodesk.AutoCAD.EditorInput;
+using Autodesk.Civil.DatabaseServices;
 
 // This line is not mandatory, but improves loading performances
 [assembly: ExtensionApplication(typeof(ALC_AttachObjectToAlignment.MyPlugin))]
@@ -18,6 +19,7 @@ namespace ALC_AttachObjectToAlignment
     // then you should remove this class.
     public class MyPlugin : IExtensionApplication
     {
+        private static DrawableOverruleAlignment _overruleAlignment = null;
 
         void IExtensionApplication.Initialize()
         {
@@ -39,6 +41,22 @@ namespace ALC_AttachObjectToAlignment
             // as well as some of the existing AutoCAD managed apps.
 
             // Initialize your plug-in application here
+
+
+            // Check Style, Label and PropertSetDefinition
+
+            if (_overruleAlignment == null)
+            {
+                _overruleAlignment = new DrawableOverruleAlignment();
+                Overrule.AddOverrule(RXClass.GetClass(typeof(Alignment)), _overruleAlignment, false);
+
+                //This is required in order for IsApplicable() being used as custom overrule filter
+                _overruleAlignment.SetCustomFilter();
+                Overrule.Overruling = true;
+            }
+            // Regen is required to update changes on screen
+            Application.DocumentManager.MdiActiveDocument.Editor.Regen();
+            //
         }
 
         void IExtensionApplication.Terminate()

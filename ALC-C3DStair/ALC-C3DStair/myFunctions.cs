@@ -40,7 +40,7 @@ namespace ALC_C3DStair
             return ed.GetCurrentView().ViewDirection.IsParallelTo(Matrix3d.Identity.CoordinateSystem3d.Zaxis);
         }
 
-        public static bool GetPropertiesFromAlignment(Alignment align, ref double tread, ref double riser, ref double landing, ref double width, ref int steps, ref bool reverse, ref double elevation)
+        public static bool GetStairPropertiesFromAlignment(Alignment align, ref double tread, ref double riser, ref double landing, ref double width, ref int steps, ref bool reverse, ref double elevation)
         {
             bool result = false;
 
@@ -52,7 +52,7 @@ namespace ALC_C3DStair
                     foreach (ObjectId id in setIds)
                     {
                         PropertySet pset = (PropertySet)id.GetObject(OpenMode.ForRead);
-                        if (pset.PropertySetDefinitionName == "Stair")
+                        if (pset.PropertySetDefinitionName == "ALCStairAlignment")
                         {
                             // Get the ObjectID of the property set definition by name
                             // Get the value of the property definition
@@ -74,15 +74,15 @@ namespace ALC_C3DStair
             return result;
         }
 
-        public static bool SetPropertiesToAlignment(Alignment align, double tread, double riser,  double landing, double width, int steps, bool reverse, double elevation)
+        public static bool SetStairPropertiesToAlignment(Alignment align, double tread, double riser,  double landing, double width, int steps, bool reverse, double elevation)
         {
             bool result = false;
             Editor ed = Application.DocumentManager.MdiActiveDocument.Editor;
 
-            if (!IsPropertySetOnAlignment(align))
+            if (!IsStairPropertySetOnAlignment(align))
             {
-                AddPropertySetToAlignment(align);
-                ed.WriteMessage("Property set for {0} created", align.Name);
+                AddStairPropertySetToAlignment(align);
+                ed.WriteMessage("\n Property set for {0} created", align.Name);
             }
 
             using (Transaction tr = HostApplicationServices.WorkingDatabase.TransactionManager.StartTransaction())
@@ -93,7 +93,7 @@ namespace ALC_C3DStair
                     foreach (ObjectId id in setIds)
                     {
                         PropertySet pset = (PropertySet)id.GetObject(OpenMode.ForWrite);
-                        if (pset.PropertySetDefinitionName == "Stair" && pset.IsWriteEnabled)
+                        if (pset.PropertySetDefinitionName == "ALCStairAlignment" && pset.IsWriteEnabled)
                         {
                             // Get the ObjectID of the property set definition by name
                             // Get the value of the property definition
@@ -114,7 +114,7 @@ namespace ALC_C3DStair
             return result;
         }
 
-        public static bool AddPropertySetToAlignment(Alignment align)
+        public static bool AddStairPropertySetToAlignment(Alignment align)
         {
             bool result = false;
 
@@ -123,7 +123,7 @@ namespace ALC_C3DStair
                 try
                 {
                     Autodesk.AutoCAD.DatabaseServices.DBObject dbobj = tr.GetObject(align.Id, OpenMode.ForWrite);
-                    PropertyDataServices.AddPropertySet(dbobj, GetPropertySetDefinitionIdByName("Stair"));
+                    PropertyDataServices.AddPropertySet(dbobj, GetPropertySetDefinitionIdByName("ALCStairAlignment"));
                     result = true;
                 }
                 catch
@@ -135,7 +135,7 @@ namespace ALC_C3DStair
             }
         }
 
-        public static bool IsPropertySetOnAlignment(Alignment align)
+        public static bool IsStairPropertySetOnAlignment(Alignment align)
         {
             bool result = false;
 
@@ -147,7 +147,7 @@ namespace ALC_C3DStair
                     foreach (ObjectId id in setIds)
                     {
                         PropertySet pset = (PropertySet)id.GetObject(OpenMode.ForRead);
-                        if (pset.PropertySetDefinitionName == "Stair")
+                        if (pset.PropertySetDefinitionName == "ALCStairAlignment")
                         {
                             result = true;
                             break;
@@ -176,6 +176,19 @@ namespace ALC_C3DStair
         public static void CreateProfileNoSurface(Alignment oAlignment)
         {
             CivilDocument civDoc = CivilApplication.ActiveDocument;
+            Editor ed = Application.DocumentManager.MdiActiveDocument.Editor;
+
+
+            int steps = 10;
+            double width = 2;
+            double tread = 0.32;
+            double landing = 0;
+            double riser = 0.16;
+            double elevation = 0;
+            bool reverse = false;
+
+            double heightEnd;
+            Point2d startPoint, endPoint;
 
             using (Transaction ts = Application.DocumentManager.MdiActiveDocument.Database.TransactionManager.StartTransaction())
             {
@@ -183,10 +196,14 @@ namespace ALC_C3DStair
                 // use the same layer as the alignment
                 ObjectId layerId = oAlignment.LayerId;
 
+                // get stair values
+                GetStairPropertiesFromAlignment(oAlignment, ref tread, ref riser, ref landing, ref width, ref steps, ref reverse, ref elevation);
+
                 // get the standard style and label set 
-                // these calls will fail on templates without a style named "Stair"
-                ObjectId styleId = civDoc.Styles.ProfileStyles["Stair"];
-                ObjectId labelSetId = civDoc.Styles.LabelSetStyles.ProfileLabelSetStyles["Stair"];
+                // these calls will fail on templates without a style named "ALCStair"
+
+                ObjectId styleId = civDoc.Styles.ProfileStyles["ALCStair"];
+                ObjectId labelSetId = civDoc.Styles.LabelSetStyles.ProfileLabelSetStyles["ALCStair"];
 
                 // create a new empty profile
                 ObjectId oProfileId = Profile.CreateByLayout("My Profile", oAlignment.Id, layerId, styleId, labelSetId);
@@ -194,8 +211,19 @@ namespace ALC_C3DStair
                 // Now add the entities that define the profile.
                 Profile oProfile = ts.GetObject(oProfileId, OpenMode.ForRead) as Profile;
 
-                Point2d startPoint = new Point2d(oAlignment.StartingStation, 40);
-                Point2d endPoint = new Point2d(oAlignment.EndingStation, -70);
+                heightEnd = elevation + steps * riser;
+                ed.WriteMessage("\n Elevation: {0}, Height: {1}, Endheight: {2}", elevation, steps * riser, heightEnd);
+                if (reverse)
+                {
+                    startPoint = new Point2d(oAlignment.StartingStation, heightEnd);
+                    endPoint = new Point2d(oAlignment.EndingStation, elevation);
+                }
+                else
+                {
+                    startPoint = new Point2d(oAlignment.StartingStation, elevation);
+                    endPoint = new Point2d(oAlignment.EndingStation, heightEnd); 
+                }
+
                 ProfileTangent oTangent1 = oProfile.Entities.AddFixedTangent(startPoint, endPoint);
 
                 ts.Commit();

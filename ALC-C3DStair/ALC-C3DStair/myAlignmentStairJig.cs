@@ -15,10 +15,10 @@ namespace ALC_C3DStair
 {
     class StationJig : DrawJig
     {
-        int steps = 5;
-        double width = 2;
-        double tread = 0.32;
-        double riser = 0.16;
+        public int steps = 5;
+        public double width = 2;
+        public double tread = 0.32;
+        public double riser = 0.16;
 
         public int jigStatus = 0;  //0  = StartPoint :: 1 = Endpoint
 
