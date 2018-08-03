@@ -6,195 +6,279 @@ using Autodesk.AutoCAD.EditorInput;
 using Autodesk.AutoCAD.Geometry;
 using Autodesk.AutoCAD.Runtime;
 using System;
+using System.Collections.Generic;
 
 
 
 // This line is not mandatory, but improves loading performances
-[assembly: CommandClass(typeof(ALC_SolidStair.MyCommands))]
+[assembly: CommandClass(typeof(LX_SolidStair.MyCommands))]
 
-namespace ALC_SolidStair
+namespace LX_SolidStair
 {
-
+    
     public class MyCommands
     {
-        [CommandMethod("ALCSolidStairCreate")]
-        public void InsertRotateStair()
+        Document doc = Application.DocumentManager.MdiActiveDocument;
+        Database db = Application.DocumentManager.MdiActiveDocument.Database;
+        Editor ed = Application.DocumentManager.MdiActiveDocument.Editor;
+
+        [CommandMethod("LXStairSolidAdd", CommandFlags.Modal)]
+        public void CreateSolidStair()
         {
-            Document doc = Application.DocumentManager.MdiActiveDocument;
-            Database db = doc.Database;
-            Editor ed = doc.Editor;
 
-            // prompt for Steps
-            PromptIntegerResult pIntRes;
-            PromptIntegerOptions pIntOpts = new PromptIntegerOptions("")
-            {
-                // Restrict input to positive and non-negative values
-                AllowZero = false,
-                AllowNegative = false
-            };
+            PromptResult pr;
 
-            //prompt for Tread, Riser, Landing, Width 
-            PromptDoubleResult pDoubleRes;
-            PromptDoubleOptions pDoubleOpts = new PromptDoubleOptions("")
-            {
-                AllowNegative = false
-            };
+            // Get default values
+            BaseStairObject bsoStandard = MyFunctions.GetPropertySetDefinitionStairStandardValues();
+
+            List<LayerObject> lstLayers = MyFunctions.GetLayerList();
+
+            winCreateStair win = new winCreateStair (lstLayers, bsoStandard);
+            Boolean rtn = Application.ShowModalWindow(win).Value;
+            if (rtn == false) return;
+
+            LayerObject selectedLayer = win.CB_Layers.SelectedItem as LayerObject;
 
             try
             {
-                using (Transaction tr = db.TransactionManager.StartTransaction())
+                BaseStairObject objStair = new BaseStairObject
                 {
+                    Id = ObjectId.Null,
+                    Name = win.TB_Name.Text,
+                    Steps = Convert.ToInt32(win.TB_Steps.Text),
+                    Tread = Convert.ToDouble(win.TB_Tread.Text),
+                    Riser = Convert.ToDouble(win.TB_Riser.Text),
+                    Landing = Convert.ToDouble(win.TB_Landing.Text),
+                    Width = Convert.ToDouble(win.TB_Width.Text),
+                    Slope = Convert.ToDouble(win.TB_Slope.Text)
+                };
+                MyJig2 jig = new MyJig2(objStair.Steps, objStair.Riser, objStair.Tread, objStair.Landing, objStair.Width, objStair.Slope);
 
-                    // Create basic stair
-                    BlockTable bt = (BlockTable)tr.GetObject(db.BlockTableId, OpenMode.ForRead);
+                do
+                {
+                    // Get the value entered by the user
+                    pr = ed.Drag(jig);
 
-                    // Create the Jig and ask the user to place the Stair
-                    StairJig jig = new StairJig(5, 0.16, 0.32, 1.1, 2.0);
-                    PromptResult pr;
-
-                    do
-                    {
-                        // Get the value entered by the user
-                        pr = ed.Drag(jig);
-
-                        // Exit if the user presses ESC or cancels the command
-                        if (pr.Status == PromptStatus.Cancel) return;
-                        if (pr.Status == PromptStatus.Keyword)
-                        {
-                            // Handling keywords
-                            switch (pr.StringResult)
-                            {
-                                case "Steps":
-                                    pIntOpts.Message = "\nSpecify number of steps [" + jig.steps.ToString() + "]: ";
-                                    pIntRes = doc.Editor.GetInteger(pIntOpts);
-                                    jig.steps = pIntRes.Value;
-                                    break;
-                                case "Riser":
-                                    pDoubleOpts.Message = "\nSpecify riser height [" + jig.riser.ToString() + "]: ";
-                                    pDoubleOpts.AllowZero = false;
-                                    pDoubleRes = doc.Editor.GetDouble(pDoubleOpts);
-                                    jig.riser = pDoubleRes.Value;
-                                    break;
-                                case "Tread":
-                                    pDoubleOpts.Message = "\nSpecify tread lenght [" + jig.tread.ToString() + "]: ";
-                                    pDoubleOpts.AllowZero = false;
-                                    pDoubleRes = doc.Editor.GetDouble(pDoubleOpts);
-                                    jig.tread = pDoubleRes.Value;
-                                    break;
-                                case "Landing":
-                                    pDoubleOpts.Message = "\nSpecify landing lenght [" + jig.landing.ToString() + "]: ";
-                                    pDoubleRes = doc.Editor.GetDouble(pDoubleOpts);
-                                    jig.landing = pDoubleRes.Value;
-                                    break;
-                                case "Width":
-                                    pDoubleOpts.Message = "\nSpecify width [" + jig.width.ToString() + "]: ";
-                                    pDoubleOpts.AllowZero = false;
-                                    pDoubleRes = doc.Editor.GetDouble(pDoubleOpts);
-                                    jig.width = pDoubleRes.Value;
-                                    break;
-                            }
-                            jig.jigUpdate = true;
-                        }
-                        else if (pr.Status == PromptStatus.OK)
-                        {
-                            // Go to next phase
-                            jig.jigStatus++;
-                        }
-                    }
-                    while (jig.jigStatus < 2);
-
+                    // Exit if the user presses ESC or cancels the command
+                    if (pr.Status == PromptStatus.Cancel) return;
 
                     if (pr.Status == PromptStatus.OK)
                     {
-                        Solid3d stair3d = myFunctions.CreateStair3D(jig.steps, jig.riser, jig.tread, jig.landing, jig.width);
-                        if (stair3d != null)
+                        // Go to next phase
+                        jig.jigStatus++;
+                    }
+                }
+                while (jig.jigStatus < 2);
+
+                if (pr.Status == PromptStatus.OK)
+                {
+                    using (Transaction tr = db.TransactionManager.StartTransaction())
+                    {
+                        try
                         {
-                            // Moving and adding to staircase drawing database
-                            stair3d.TransformBy(jig.Displacement);
-                            stair3d.TransformBy(jig.Rotation);
-                            BlockTableRecord curSpace = (BlockTableRecord)tr.GetObject(db.CurrentSpaceId, OpenMode.ForWrite);
-                            curSpace.AppendEntity(stair3d);
-                            tr.AddNewlyCreatedDBObject(stair3d, true);
-
-                            // Extension dictionary
-                            Autodesk.AutoCAD.DatabaseServices.DBObject dbObj = stair3d;
-                            ObjectId extId = dbObj.ExtensionDictionary;
-
-                            dbObj.UpgradeOpen();
-                            dbObj.CreateExtensionDictionary();
-                            extId = dbObj.ExtensionDictionary;
-
-                            DBDictionary dbExt = (DBDictionary)tr.GetObject(extId, OpenMode.ForRead);
-
-                            dbExt.UpgradeOpen();
-
-                            Xrecord xr = new Xrecord();
-                            ResultBuffer rb = new ResultBuffer()
+                            BlockTable bt = (BlockTable)tr.GetObject(db.BlockTableId, OpenMode.ForRead);
+                            Solid3d stair3d = MyFunctions.CreateStair3D(jig.steps, jig.riser, jig.tread, jig.landing, jig.width, jig.slope);
+                            if (stair3d != null)
                             {
-                                new TypedValue((int)DxfCode.ExtendedDataInteger32, jig.steps),
-                                new TypedValue((int)DxfCode.ExtendedDataReal, jig.tread),
-                                new TypedValue((int)DxfCode.ExtendedDataReal, jig.riser),
-                                new TypedValue((int)DxfCode.ExtendedDataReal, jig.landing),
-                                new TypedValue((int)DxfCode.ExtendedDataReal, jig.width)
-                            };
+                                // Moving and adding to staircase drawing database
+                                stair3d.TransformBy(jig.matDisplacement);
+                                stair3d.TransformBy(jig.matRotation);
+                                //update layer
+                                stair3d.LayerId = selectedLayer.Id;
 
-                            xr.Data = rb;
-                            dbExt.SetAt("StairCase", xr);
-                            tr.AddNewlyCreatedDBObject(xr, true);
+                                BlockTableRecord curSpace = (BlockTableRecord)tr.GetObject(db.CurrentSpaceId, OpenMode.ForWrite);
+                                curSpace.AppendEntity(stair3d);
+                                tr.AddNewlyCreatedDBObject(stair3d, true);
 
+                                // Adding ParameterSet to Staircase
+                                objStair.Id = stair3d.Id;
+                                bool isCreated = MyFunctions.SetStairPropertiesToSolid(stair3d, objStair);
+                            }
+                        }
+                        catch (System.Exception ex)
+                        {
+                            ed.WriteMessage(ex.ToString());
                         }
                         tr.Commit();
-
                     }
-                    else
-                    {
-                        ed.WriteMessage("Error: Staircase creation failed");
-                    }
-
                 }
             }
-            catch (System.Exception ex)
+            catch
             {
-                ed.WriteMessage(ex.ToString());
+                ed.WriteMessage("\n Something wrong");
             }
         }
 
 
-        [CommandMethod("ALCGroup", "ALCGetStair", CommandFlags.UsePickSet)]
-        public void GetStairValues()
+        [CommandMethod("LXStairSolidModify", CommandFlags.Modal | CommandFlags.UsePickSet)]
+        public void ModifySolidStair()
         {
-            Document doc = Application.DocumentManager.MdiActiveDocument;
-            Editor ed = doc.Editor;
-            PromptEntityOptions peo = new PromptEntityOptions("Pick a 3DSOLID: ");
-            peo.SetRejectMessage("\nA 3d solid must be selected.");
-            peo.AddAllowedClass(typeof(Solid3d), true);
+            ObjectId entId = MyFunctions.SelectStair();
+            Matrix3d matDisplacement, matRotation;
 
-            PromptEntityResult per = ed.GetEntity(peo);
-
-            if (per.Status != PromptStatus.OK) return;
-
-            using (Transaction tr = doc.Database.TransactionManager.StartTransaction())
+            Solid3d stair3d;
+            if (entId != ObjectId.Null)
             {
-                ObjectId id = per.ObjectId;
-
-                Solid3d stair = tr.GetObject(per.ObjectId, OpenMode.ForRead, false) as Solid3d;
-                Boolean correct = myFunctions.IsStair(stair);
-                if (correct)
+                // we have a valid id for a stair with attached properties
+                using (Transaction tr = db.TransactionManager.StartTransaction())
                 {
-                    Point3d ptStart = myFunctions.GetStairStartPoint(stair);
-                    double angle = myFunctions.GetStairAngle(stair);
+                    // getting stair geometry and parameters
+                    stair3d = tr.GetObject(entId, OpenMode.ForRead) as Solid3d;
 
-                    ed.WriteMessage("\n Startpoint: {0} Angle {1}", ptStart.ToString(), angle.ToString());
+                    // getting stair position and rotation
+                    matDisplacement = MyFunctions.GetStairDisplacment(stair3d);
+                    matRotation = MyFunctions.GetStairRotation(stair3d);
 
-                    int numstairs = myFunctions.GetStairSteps(stair);
-                    double tread = myFunctions.GetStairTread(stair);
-                    ed.WriteMessage("\n Numbers of Stairs: {0} Tread: {1}", numstairs.ToString(), tread.ToString());
+                    tr.Commit();
+                };
 
+                List<LayerObject> lstLayers = MyFunctions.GetLayerList(stair3d.LayerId);
+
+                BaseStairObject bso = MyFunctions.GetStairPropertiesFromSolid(stair3d);
+
+                Point3d pInsert = MyFunctions.GetStairInsertPoint(stair3d);
+                Double angle = MyFunctions.GetStairRotationAngle(stair3d);
+
+
+                SolidStairObject sso = new SolidStairObject
+                {
+                    Id = bso.Id,
+                    Name = bso.Name,
+                    Steps = bso.Steps,
+                    Riser = bso.Riser,
+                    Tread = bso.Tread,
+                    Landing = bso.Landing,
+                    Width = bso.Width,
+                    Slope = bso.Slope,
+                    X = pInsert.X,
+                    Y = pInsert.Y,
+                    Elevation = pInsert.Z,
+                    Rotation = angle/Math.PI*180
+                };
+
+                winModifyStairSolid win = new winModifyStairSolid(lstLayers, sso);
+                Boolean rtn = Application.ShowModalWindow(win).Value;
+                if (rtn == false) return;
+
+                LayerObject selectedLayer = win.CB_Layers.SelectedItem as LayerObject;
+
+
+                try
+                {
+                    SolidStairObject retObjStair = new SolidStairObject
+                    {
+                        Id = ObjectId.Null,
+                        Name = win.TB_Name.Text,
+                        Steps = Convert.ToInt32(win.TB_Steps.Text),
+                        Tread = Convert.ToDouble(win.TB_Tread.Text),
+                        Riser = Convert.ToDouble(win.TB_Riser.Text),
+                        Landing = Convert.ToDouble(win.TB_Landing.Text),
+                        Width = Convert.ToDouble(win.TB_Width.Text),
+                        Slope = Convert.ToDouble(win.TB_Slope.Text),
+                        X = Convert.ToDouble(win.TB_X.Text),
+                        Y = Convert.ToDouble(win.TB_Y.Text),
+                        Elevation = Convert.ToDouble(win.TB_E.Text),
+                        Rotation = Convert.ToDouble(win.TB_R.Text) / 180 * Math.PI
+                    };
+
+
+                    using (Transaction tr = db.TransactionManager.StartTransaction())
+                    {
+                        try
+                        {
+                            stair3d = tr.GetObject(entId, OpenMode.ForWrite) as Solid3d;
+
+                            stair3d.RecordHistory = true;
+
+                            Polyline pline = MyFunctions.CreateStairPolyline(retObjStair.Steps, retObjStair.Riser, retObjStair.Tread, retObjStair.Landing, retObjStair.Slope);
+                            Polyline path = MyFunctions.CreateStairSweepPath(retObjStair.Width);
+
+                            stair3d.CreateSweptSolid(pline, path, MyFunctions.CreateSweepOptions(path).ToSweepOptions());
+
+                            //update matrix
+                            Point3d pNewInsert = new Point3d(retObjStair.X, retObjStair.Y, retObjStair.Elevation);
+
+                            Vector3d disp = Point3d.Origin.GetVectorTo(pNewInsert);
+                            matDisplacement = Matrix3d.Displacement(disp);
+                            stair3d.TransformBy(matDisplacement);
+
+                            matRotation = Matrix3d.Rotation(retObjStair.Rotation, Vector3d.ZAxis, pNewInsert);
+                            stair3d.TransformBy(matRotation);
+
+                            retObjStair.Id = stair3d.Id;
+
+                            //update layer
+                            stair3d.LayerId = selectedLayer.Id;
+
+                            // set property data
+                            Boolean isCreated = MyFunctions.SetStairPropertiesToSolid(stair3d, retObjStair);
+                        }
+                        catch (System.Exception ex)
+                        {
+                            ed.WriteMessage(ex.ToString());
+                        }
+                        tr.Commit();
+                    }
                 }
-                tr.Commit();
+                catch 
+                {
+                    ed.WriteMessage("\n Something wrong");
+                }
+            };
+        }
+
+
+        [CommandMethod("LXStairList")]
+        public void ListStair()
+        {
+            List<BaseStairObject> stairList = MyFunctions.GetStairList();
+
+            if (stairList == null)
+            {
+                ed.WriteMessage("\n" + "Error: No stairs in this drawing");
+                return;
+            }
+            else
+            {
+                winListStairs win = new winListStairs(stairList);
+                Boolean rtn = Application.ShowModalWindow(win).Value;
+                return;
             }
         }
+
+        //[CommandMethod("LXStairStandardList")]
+        //public void ListStandardStair()
+        //{
+        //    Editor ed = Application.DocumentManager.MdiActiveDocument.Editor;
+        //    BaseStairObject bso = MyFunctions.GetPropertySetDefinitionStairStandardValues();
+
+        //    ed.WriteMessage("\nTread: {0}", bso.Tread);
+        //    ed.WriteMessage("\nRiser: {0}", bso.Riser);
+        //    ed.WriteMessage("\nLanding: {0}", bso.Landing);
+        //    ed.WriteMessage("\nWidth: {0}", bso.Width);
+        //    ed.WriteMessage("\nSteps: {0}", bso.Steps);
+        //    ed.WriteMessage("\nNames: {0}", bso.Name); 
+        //}
+
+        
+
+        //[CommandMethod("LXStairPropertSetAdd")]
+        //public void CreateStairPropertySetDefinition()
+        //{
+        //    ObjectId psdId = MyFunctions.GetPropertySetDefinitionIdByName(MyPlugin.psdName);
+        //    if (psdId == ObjectId.Null)
+        //    {
+        //        MyFunctions.CreateStairPropertySetDefinition(MyPlugin.psdName);
+        //        ed.WriteMessage("\n Property set defenition {0} created", MyPlugin.psdName);
+        //    }
+        //    else
+        //    {
+        //        ed.WriteMessage("\n Property set defenition {0} alreday exist, no property set definition created", MyPlugin.psdName);
+        //    }
+        //}
+
+
+
 
     }
-
 }

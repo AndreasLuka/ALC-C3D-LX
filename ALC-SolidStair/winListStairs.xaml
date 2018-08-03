@@ -1,0 +1,23 @@
+﻿<Window x:Class="LX_SolidStair.winListStairs"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    Title="Stairs" Height="400" MinHeight="300" Width="400" MinWidth="400" WindowStartupLocation="CenterScreen" ShowInTaskbar="False" ResizeMode="CanResize" WindowStyle="ToolWindow">
+    <Grid>
+
+        
+        <StackPanel>
+            <DataGrid Name ="Stairs" Margin="4,4,4,4" AutoGenerateColumns="False" IsReadOnly="True" >
+                <DataGrid.Columns >
+                    <DataGridTextColumn Header ="Name" Width ="*" Binding="{Binding Name}"/>
+                    <DataGridTextColumn Header ="Steps" Width ="40" Binding="{Binding Steps}"/>
+                    <DataGridTextColumn Header ="Tread" Width ="40" Binding="{Binding Tread}"/>
+                    <DataGridTextColumn Header ="Riser" Width ="40" Binding="{Binding Riser}"/>
+                    <DataGridTextColumn Header ="Land." Width ="40" Binding="{Binding Landing}"/>
+                    <DataGridTextColumn Header ="Slope" Width ="40" Binding="{Binding Slope}"/>
+                </DataGrid.Columns>
+            </DataGrid>
+
+        </StackPanel>
+
+    </Grid>
+</Window>
