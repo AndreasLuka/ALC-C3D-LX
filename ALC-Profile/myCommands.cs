@@ -1,4 +1,5 @@
-﻿// (C) Copyright 2018 by  
+﻿
+// (C) Copyright 2018 by  
 //
 using System;
 using Autodesk.AutoCAD.Runtime;

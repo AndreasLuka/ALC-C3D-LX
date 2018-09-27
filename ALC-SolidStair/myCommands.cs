@@ -110,7 +110,8 @@ namespace LX_SolidStair
         }
 
 
-        [CommandMethod("LXStairSolidModify", CommandFlags.Modal | CommandFlags.UsePickSet)]
+        [CommandMethod("LXStairSolidModify", CommandFlags.Modal | CommandFlags.UsePickSet
+            )]
         public void ModifySolidStair()
         {
             ObjectId entId = MyFunctions.SelectStair();

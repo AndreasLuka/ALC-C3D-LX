@@ -8,11 +8,11 @@ using System.Runtime.InteropServices;
 // General Information about an assembly is controlled through the following 
 // set of attributes. Change these attribute values to modify the information
 // associated with an assembly.
-[assembly: AssemblyTitle("ALC-PipeOverrule")]
+[assembly: AssemblyTitle("LX-GetStationOffset")]
 [assembly: AssemblyDescription("")]
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("")]
-[assembly: AssemblyProduct("ALC-PipeOverrule")]
+[assembly: AssemblyProduct("LX-GetStationOffset")]
 [assembly: AssemblyCopyright("Copyright ©  2018")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
@@ -63,4 +63,4 @@ using System.Runtime.InteropServices;
 [assembly: ComVisible(false)]
 
 // The following GUID is for the ID of the typelib if this project is exposed to COM
-[assembly: Guid("c2a18a3a-6405-4a0f-ba19-d9266d8453f6")]
+[assembly: Guid("ff014797-6ff8-4549-9228-ceb1b5629854")]

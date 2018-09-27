@@ -1,15 +1,16 @@
-﻿using Autodesk.AutoCAD.ApplicationServices;
+﻿// (C) Copyright 2018 by  
+//
+using System;
 using Autodesk.AutoCAD.Runtime;
+using Autodesk.AutoCAD.ApplicationServices;
 using Autodesk.AutoCAD.DatabaseServices;
-using Autodesk.AutoCAD.EditorInput;
 using Autodesk.AutoCAD.Geometry;
-using Autodesk.AutoCAD.GraphicsInterface;
-using Autodesk.AutoCAD.Colors;
+using Autodesk.AutoCAD.EditorInput;
 
 // This line is not mandatory, but improves loading performances
-[assembly: ExtensionApplication(typeof(ALC_PipeOverrule.MyPlugin))]
+[assembly: ExtensionApplication(typeof(LX_GetStationOffset.MyPlugin))]
 
-namespace ALC_PipeOverrule
+namespace LX_GetStationOffset
 {
 
     // This class is instantiated by AutoCAD once and kept alive for the 
@@ -38,8 +39,6 @@ namespace ALC_PipeOverrule
             // as well as some of the existing AutoCAD managed apps.
 
             // Initialize your plug-in application here
-
-
         }
 
         void IExtensionApplication.Terminate()

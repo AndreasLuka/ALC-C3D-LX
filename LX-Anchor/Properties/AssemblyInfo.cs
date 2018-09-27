@@ -8,12 +8,12 @@ using System.Runtime.InteropServices;
 // General Information about an assembly is controlled through the following 
 // set of attributes. Change these attribute values to modify the information
 // associated with an assembly.
-[assembly: AssemblyTitle("ALC-AttachObjectToAlignment")]
+[assembly: AssemblyTitle("LX-Anchor")]
 [assembly: AssemblyDescription("")]
 [assembly: AssemblyConfiguration("")]
-[assembly: AssemblyCompany("")]
-[assembly: AssemblyProduct("ALC-AttachObjectToAlignment")]
-[assembly: AssemblyCopyright("Copyright ©  2018")]
+[assembly: AssemblyCompany("ALC")]
+[assembly: AssemblyProduct("LX-Anchor")]
+[assembly: AssemblyCopyright("Copyright ©  2018 Andreasuka (Lu An Jie)")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
 
@@ -63,4 +63,4 @@ using System.Runtime.InteropServices;
 [assembly: ComVisible(false)]
 
 // The following GUID is for the ID of the typelib if this project is exposed to COM
-[assembly: Guid("ab9f8142-565b-4fae-ae67-5829e19e46fe")]
+[assembly: Guid("8818a49d-3685-4457-9c83-21a0385293d1")]
