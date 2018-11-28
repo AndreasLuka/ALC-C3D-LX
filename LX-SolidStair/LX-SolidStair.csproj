@@ -81,37 +81,36 @@
     <Reference Include="accoremgd, Version=22.0.0.0, Culture=neutral, processorArchitecture=AMD64">
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\..\..\..\..\..\Program Files\Autodesk\AutoCAD 2018\accoremgd.dll</HintPath>
+      <Private>False</Private>
     </Reference>
     <Reference Include="acdbmgd, Version=22.0.0.0, Culture=neutral, processorArchitecture=AMD64">
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\..\..\..\..\..\Program Files\Autodesk\AutoCAD 2018\acdbmgd.dll</HintPath>
+      <Private>False</Private>
     </Reference>
     <Reference Include="acmgd, Version=22.0.0.0, Culture=neutral, processorArchitecture=AMD64">
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\..\..\..\..\..\Program Files\Autodesk\AutoCAD 2018\acmgd.dll</HintPath>
+      <Private>False</Private>
     </Reference>
-    <Reference Include="AecBaseMgd, Version=8.0.44.0, Culture=neutral, processorArchitecture=AMD64">
+    <Reference Include="AecBaseMgd, Version=7.9.48.0, Culture=neutral, processorArchitecture=AMD64">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\..\..\..\..\Program Files\Autodesk\AutoCAD 2017\ACA\AecBaseMgd.dll</HintPath>
+      <HintPath>..\..\..\..\..\..\Program Files\Autodesk\AutoCAD 2018\ACA\AecBaseMgd.dll</HintPath>
+      <Private>False</Private>
     </Reference>
-    <Reference Include="AeccCogoMgd, Version=12.0.842.0, Culture=neutral, processorArchitecture=AMD64">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\..\..\..\..\Program Files\Autodesk\AutoCAD 2018\C3D\AeccCogoMgd.dll</HintPath>
-    </Reference>
-    <Reference Include="AeccDbMgd, Version=12.0.842.0, Culture=neutral, processorArchitecture=AMD64">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\..\..\..\..\Program Files\Autodesk\AutoCAD 2018\C3D\AeccDbMgd.dll</HintPath>
-    </Reference>
-    <Reference Include="AeccPressurePipesMgd, Version=12.0.842.0, Culture=neutral, processorArchitecture=AMD64">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\..\..\..\..\Program Files\Autodesk\AutoCAD 2018\C3D\AeccPressurePipesMgd.dll</HintPath>
+    <Reference Include="AecBaseUtilsMgd">
+      <HintPath>..\..\..\..\..\..\Program Files\Autodesk\AutoCAD 2018\ACA\AecBaseUtilsMgd.dll</HintPath>
+      <Private>False</Private>
     </Reference>
     <Reference Include="AeccUiMgd, Version=12.0.842.0, Culture=neutral, processorArchitecture=AMD64">
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\..\..\..\..\..\Program Files\Autodesk\AutoCAD 2018\C3D\AeccUiMgd.dll</HintPath>
+      <Private>False</Private>
     </Reference>
-    <Reference Include="AecPropDataMgd">
-      <HintPath>..\..\..\..\..\..\Program Files\Autodesk\AutoCAD 2017\ACA\AecPropDataMgd.dll</HintPath>
+    <Reference Include="AecPropDataMgd, Version=7.9.48.0, Culture=neutral, processorArchitecture=AMD64">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\..\..\..\..\Program Files\Autodesk\AutoCAD 2018\ACA\AecPropDataMgd.dll</HintPath>
+      <Private>False</Private>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core">

@@ -23,14 +23,6 @@ namespace LX_SolidStair
 
         void IExtensionApplication.Initialize()
         {
-            // Check StairParameterSetDefinition exist 
-            ObjectId psdId = MyFunctions.GetPropertySetDefinitionIdByName(psdName);
-            if (psdId == ObjectId.Null)
-            {
-                MyFunctions.CreateStairPropertySetDefinition(MyPlugin.psdName);
-                ed.WriteMessage("\n Property set defenition {0} created", psdName);
-            }
-
             //if (overruleALCSolidStair == null)
             //{
             //    overruleALCSolidStair = new DrawableOverruleStair();

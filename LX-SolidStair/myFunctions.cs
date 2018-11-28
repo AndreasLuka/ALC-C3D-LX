@@ -61,7 +61,6 @@ namespace LX_SolidStair
 
             if (psdId != ObjectId.Null)
             {
-                ed.WriteMessage("\n Property set definition {0} exist", psdName);
                 return psdId;
                 // check version and correctness not implemented
             }
@@ -223,30 +222,27 @@ namespace LX_SolidStair
 
         public static BaseStairObject GetPropertySetDefinitionStairStandardValues()
         {
-
-            PropertySetDefinition psd = new PropertySetDefinition();
-            // ObjectId psdId = ObjectId.Null;
-
             Database db = Application.DocumentManager.MdiActiveDocument.Database;
-            Autodesk.AutoCAD.DatabaseServices.TransactionManager tm = db.TransactionManager;
-
             Editor ed = Application.DocumentManager.MdiActiveDocument.Editor;
-
             BaseStairObject retBso = new BaseStairObject();
 
-            using (Transaction tr = tm.StartTransaction())
+            using (Transaction tr = db.TransactionManager.StartTransaction())
             {
                 try
                 {
                     DictionaryPropertySetDefinitions psdDict = new DictionaryPropertySetDefinitions(db);
-                    if (psdDict.Has(MyPlugin.psdName, tr))
-                    {
-                        // Get the ObjectID of the property set definition by name
-                        // psdId = psdDict.GetAt(MyPlugin.psdName);
-                        psd = (PropertySetDefinition)tr.GetObject(psdDict.GetAt(MyPlugin.psdName), OpenMode.ForRead);
 
-                        // Get the standard value from the properties in the property set defenition
-                        BaseStairObject bso = new BaseStairObject
+                    // Create property set definition if not existing
+                    if (!psdDict.Has(MyPlugin.psdName, tr))
+                    {
+                        CreateStairPropertySetDefinition(MyPlugin.psdName);
+                        ed.WriteMessage("\n Property set defenition {0} created", MyPlugin.psdName);
+                    }
+
+                    PropertySetDefinition psd = (PropertySetDefinition)tr.GetObject(psdDict.GetAt(MyPlugin.psdName), OpenMode.ForRead);
+
+                    // Get the standard value from the properties in the property set defenition
+                    BaseStairObject bso = new BaseStairObject
                         {
                             Id = ObjectId.Null,
                             Name = Convert.ToString(psd.Definitions[psd.Definitions.IndexOf("name")].DefaultData),
@@ -258,8 +254,7 @@ namespace LX_SolidStair
                             Slope = Convert.ToDouble(psd.Definitions[psd.Definitions.IndexOf("_slope")].DefaultData)
                         };
                         retBso = bso;
-                    }
-                    else { ed.WriteMessage("\n PropertySetDefinition {0} does not exist ", MyPlugin.psdName); }
+
                 }
                 catch
                 {
@@ -271,26 +266,27 @@ namespace LX_SolidStair
         }
 
 
-        // Property sets
         public static bool AddStairPropertySetToSolid(Solid3d sol)
         {
             bool result = false;
+            Database db = Application.DocumentManager.MdiActiveDocument.Database;
             Editor ed = Application.DocumentManager.MdiActiveDocument.Editor;
 
-            ObjectId psdId = GetPropertySetDefinitionIdByName(MyPlugin.psdName);
-
-            // Create property set definition if not existing
-            if (psdId == ObjectId.Null)
-            {
-                MyFunctions.CreateStairPropertySetDefinition(MyPlugin.psdName);
-                ed.WriteMessage("\n Property set defenition ALCStairSolid created");
-            }
-
-            using (Transaction tr = HostApplicationServices.WorkingDatabase.TransactionManager.StartTransaction())
+            using (Transaction tr = db.TransactionManager.StartTransaction())
             {
                 try
                 {
-                    Autodesk.AutoCAD.DatabaseServices.DBObject dbobj = tr.GetObject(sol.Id, OpenMode.ForWrite);
+                    DictionaryPropertySetDefinitions psdDict = new DictionaryPropertySetDefinitions(db);
+
+                    // Create property set definition if not existing
+                    if (!psdDict.Has(MyPlugin.psdName, tr))
+                    {
+                        CreateStairPropertySetDefinition(MyPlugin.psdName);
+                        ed.WriteMessage("\n Property set defenition {0} created", MyPlugin.psdName);
+                    }
+
+                    ObjectId psdId = GetPropertySetDefinitionIdByName(MyPlugin.psdName);
+                    DBObject dbobj = tr.GetObject(sol.Id, OpenMode.ForWrite);
                     PropertyDataServices.AddPropertySet(dbobj, psdId);
                     result = true;
                 }
